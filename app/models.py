@@ -1,8 +1,7 @@
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import String, DateTime, func, ForeignKey
+from sqlalchemy import String, DateTime, func, ForeignKey, Text
 from datetime import datetime
 from enum import Enum
-from typing import Text
 
 from .database import Base
 
@@ -60,9 +59,9 @@ class AccountPool(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     username: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     password: Mapped[str] = mapped_column(nullable=False)
-    proxy_url: Mapped[str] = mapped_column()
+    proxy_url: Mapped[str] = mapped_column(nullable=True)
     status: Mapped[AccountStatuses] = mapped_column(nullable=False, default=AccountStatuses.AVAILABLE)
-    last_used_at: Mapped[datetime] = mapped_column(DateTime)
+    last_used_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     profiles_parsed_count: Mapped[int] = mapped_column(nullable=False, default=0)
 
 class SearchTask(Base):
@@ -72,7 +71,7 @@ class SearchTask(Base):
     task_type: Mapped[TasksTypes] = mapped_column()
     query: Mapped[str] = mapped_column(nullable=False)
     city: Mapped[str] = mapped_column()
-    status: Mapped[TasksStatuses] = mapped_column()
+    status: Mapped[TasksStatuses] = mapped_column(default=TasksStatuses.PENDING)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     
 class RawProfile(Base):
@@ -83,7 +82,7 @@ class RawProfile(Base):
     url: Mapped[str] = mapped_column(nullable=False)
     task_id: Mapped[int] = mapped_column(ForeignKey("search_tasks.id"))
     parsed_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
-    parse_status: Mapped[ParseStatus] = mapped_column()
+    parse_status: Mapped[ParseStatus] = mapped_column(default=ParseStatus.PENDING)
     
 class Lead(Base):
     __tablename__ = "leads"
@@ -106,9 +105,9 @@ class Contact(Base):
     
     id: Mapped[int] = mapped_column(primary_key=True)
     lead_id: Mapped[int] = mapped_column(ForeignKey("leads.id"))
-    type: Mapped[TypeContacts] = mapped_column()
+    type: Mapped[TypeContacts] = mapped_column(nullable=False)
     value: Mapped[str] = mapped_column(nullable=False)
-    source: Mapped[SourceContacts] = mapped_column()
+    source: Mapped[SourceContacts] = mapped_column(nullable=False)
     is_valid: Mapped[bool] = mapped_column(default=True)
     
 class ErrorLog(Base):
@@ -117,7 +116,7 @@ class ErrorLog(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     account_id: Mapped[int] = mapped_column(ForeignKey("accounts_pool.id"), nullable=True)
     profile_id: Mapped[int] = mapped_column(ForeignKey("raw_profiles.id"), nullable=True)
-    error_type: Mapped[TypeError] = mapped_column()
+    error_type: Mapped[ErrorType] = mapped_column()
     message: Mapped[Text] = mapped_column(nullable=False)
     stack_trace: Mapped[Text] = mapped_column(nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())

@@ -14,8 +14,6 @@ class Base(DeclarativeBase):
 
 async def get_db():
     async with AsyncSessionLocal() as ses:
-        try:
-            yield ses
-        finally:
-            await ses.close()
+        yield ses
+        
                         
