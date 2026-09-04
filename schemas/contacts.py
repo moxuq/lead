@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, field_validator, ValidationInfo, AnyUrl, EmailStr
+from pydantic import BaseModel, ConfigDict, field_validator, ValidationInfo, AnyUrl, EmailStr, TypeAdapter
 from typing import Annotated
 import phonenumbers
 
@@ -24,8 +24,9 @@ class ContactDTO(BaseModel):
                     continue
             raise ValueError("The phone number is not valid")
         if contact_type == TypeContacts.EMAIL:
+            email_adapter = TypeAdapter(EmailStr)
             try:
-                EmailStr._validate(value)
+                email_adapter.validate_python(value)
             except Exception:
                 raise ValueError("Incorrect email")
             return value
