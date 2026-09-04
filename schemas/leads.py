@@ -27,7 +27,7 @@ class LeadExport(BaseModel):
     followers_count: Annotated[int, Field(alias="Subscribers")]
     is_business_account: Annotated[bool, Field(alias="IsBusiness")]
     is_verified: Annotated[bool, Field(alias="IsVerified")]
-    no_site_reason: Annotated[str | None, Field(alias="NoSiteReason")]
+    no_site_reason: Annotated[LeadsNoSiteReason, Field(alias="NoSiteReason")]
     address: Annotated[str | None, Field(alias="Address")]
     parsed_at: Annotated[datetime, Field(alias="ParsedAt")]
     

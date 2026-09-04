@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, field_validator, ValidationInfo, EmailStr, HttpUrl
+from pydantic import BaseModel, ConfigDict, field_validator, ValidationInfo, AnyUrl, EmailStr
 from typing import Annotated
 import phonenumbers
 
@@ -10,25 +10,31 @@ class ContactDTO(BaseModel):
     value: str
     source: SourceContacts
     
-    @field_validator("value")
+    @field_validator("value", mode="before")
     @classmethod
     def type_valid(cls, value: str, info: ValidationInfo) -> str:
-        value = value.lower().strip()
-        type = info.data.get("type")
-        if type == TypeContacts.PHONE:
-            parsed = phonenumbers.parse(value, None)
-            if not phonenumbers.is_valid_number(parsed):
-                raise ValueError("The phone number is not valid")
-            return phonenumbers.format_number(parsed, phonenumbers.PhoneNumberFormat.E164)
-        if type == TypeContacts.EMAIL:
+        value = str(value).lower().strip()
+        contact_type = info.data.get("type")
+        if contact_type == TypeContacts.PHONE:
+            for region in ["RU", "US", None]:
+                try:
+                    parsed = phonenumbers.parse(value, region)
+                    if phonenumbers.is_valid_number(parsed): return phonenumbers.format_number(parsed, phonenumbers.PhoneNumberFormat.E164)
+                except:
+                    continue
+            raise ValueError("The phone number is not valid")
+        if contact_type == TypeContacts.EMAIL:
             try:
-                email = EmailStr(value)
-            except Exception as e:
+                EmailStr._validate(value)
+            except Exception:
                 raise ValueError("Incorrect email")
-            return email
-        if type == TypeContacts.WEBSITE:
+            return value
+        if contact_type == TypeContacts.WEBSITE:
             try:
-                url = HttpUrl(value)
-            except Exception as e:
+                AnyUrl(url=value)
+            except Exception:
                 raise ValueError("Incorrect url")
-            return url
+            return value
+        return value
+    
+    model_config = ConfigDict(extra='forbid')
