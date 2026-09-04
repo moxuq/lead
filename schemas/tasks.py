@@ -13,20 +13,22 @@ class TaskCreate(BaseModel):
     @field_validator("city")
     @classmethod
     def check_city(cls, value: str, info: ValidationInfo) -> str:
-        if not value and info.data["task_type"] == TasksTypes.LOCATION:
+        task_type = info.data.get("task_type")
+        if not value and task_type == TasksTypes.LOCATION:
             raise ValueError("The city for the location-type task has not been set")
         return value
-    
+
     @field_validator("query")
     @classmethod
     def check_hashtag(cls, value: str, info: ValidationInfo) -> str:
-        if info.data["task_type"] == TasksTypes.HASHTAG and not value.startswith("#"):
+        task_type = info.data.get("task_type")
+        if task_type == TasksTypes.HASHTAG and not value.startswith("#"):
             return f"#{value}"
         return value
     
     model_config = ConfigDict(extra='forbid')
     
-class TaskResponce(BaseModel):
+class TaskResponse(BaseModel):
     id: int
     task_type: TasksTypes
     query: str

@@ -61,7 +61,7 @@ class AccountPool(Base):
     password: Mapped[str] = mapped_column(nullable=False)
     proxy_url: Mapped[str] = mapped_column(nullable=True)
     status: Mapped[AccountStatuses] = mapped_column(nullable=False, default=AccountStatuses.AVAILABLE)
-    last_used_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    last_used_at: Mapped[datetime | None] = mapped_column(DateTime, default=None, nullable=True)
     profiles_parsed_count: Mapped[int] = mapped_column(nullable=False, default=0)
 
 class SearchTask(Base):
