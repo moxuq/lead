@@ -11,9 +11,13 @@ class AccountCreate(BaseModel):
     
     model_config = ConfigDict(extra='forbid')
     
-class AccountResponce(BaseModel):
+class AccountResponse(BaseModel):
     id: int
     username: str
     proxy_url: str | None
     status: AccountStatuses
+    profiles_parsed_count: int
+    last_used_at: datetime | None
+    
+    model_config = ConfigDict(from_attributes=True)
     
