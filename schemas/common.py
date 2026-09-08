@@ -1,5 +1,5 @@
 from typing import Literal, Annotated
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, model_validator
 
 from ..db.models import LeadsNoSiteReason
 
@@ -13,13 +13,20 @@ class ExportRequest(BaseModel):
     model_config = ConfigDict(extra='forbid')
     
 class FilterQuery(BaseModel):
-    has_website: bool | None
-    is_business_account: bool | None
-    no_site_reason: LeadsNoSiteReason | None
-    min_followers: int | None
-    max_followers: int | None
+    has_website: Annotated[bool | None, Field(default=None)]
+    is_business_account: Annotated[bool | None, Field(default=None)]
+    no_site_reason: Annotated[LeadsNoSiteReason | None, Field(default=None)]
+    min_followers: Annotated[int | None, Field(default=None)]
+    max_followers: Annotated[int | None, Field(default=None)]
     
-    model_config = ConfigDict(from_attributes=True)
+    @model_validator(mode='after')
+    def check_followers(self):
+        if self.min_followers is not None and self.max_followers is not None:
+            if self.min_followers > self.max_followers:
+                raise ValueError('Минимальное количество подписчиков не может быть больше максимального')
+        return self
+    
+    model_config = ConfigDict(extra='forbid')
     
 class StatsResponse(BaseModel):
     total_accounts: int
