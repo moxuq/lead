@@ -16,8 +16,8 @@ class FilterQuery(BaseModel):
     has_website: Annotated[bool | None, Field(default=None)]
     is_business_account: Annotated[bool | None, Field(default=None)]
     no_site_reason: Annotated[LeadsNoSiteReason | None, Field(default=None)]
-    min_followers: Annotated[int | None, Field(default=None)]
-    max_followers: Annotated[int | None, Field(default=None)]
+    min_followers: Annotated[int | None, Field(default=None, ge=0)]
+    max_followers: Annotated[int | None, Field(default=None, ge=0)]
     
     @model_validator(mode='after')
     def check_followers(self):
