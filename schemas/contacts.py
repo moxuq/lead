@@ -1,15 +1,23 @@
-from pydantic import BaseModel, ConfigDict, field_validator, ValidationInfo, AnyUrl, EmailStr, TypeAdapter
-from typing import Annotated
 import phonenumbers
+from pydantic import (
+    AnyUrl,
+    BaseModel,
+    ConfigDict,
+    EmailStr,
+    TypeAdapter,
+    ValidationInfo,
+    field_validator,
+)
 
-from ..db.models import TypeContacts, SourceContacts
+from ..db.models import SourceContacts, TypeContacts
+
 
 class ContactDTO(BaseModel):
     lead_id: int
     type: TypeContacts
     value: str
     source: SourceContacts
-    
+
     @field_validator("value", mode="before")
     @classmethod
     def type_valid(cls, value: str, info: ValidationInfo) -> str:
@@ -37,5 +45,5 @@ class ContactDTO(BaseModel):
                 raise ValueError("Incorrect url")
             return value
         return value
-    
+
     model_config = ConfigDict(extra='forbid')

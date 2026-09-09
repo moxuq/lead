@@ -1,8 +1,10 @@
-from pydantic import Field, ConfigDict, BaseModel, field_validator
 from datetime import datetime
 from typing import Annotated
 
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
 from ..db.models import LeadsNoSiteReason
+
 
 class LeadDTO(BaseModel):
     username: Annotated[str, Field()]
@@ -16,9 +18,9 @@ class LeadDTO(BaseModel):
     has_website: Annotated[bool, Field()]
     no_site_reason: Annotated[LeadsNoSiteReason | None, Field()]
     address: Annotated[str | None, Field()]
-    
+
     model_config = ConfigDict(extra='forbid')
-    
+
 class LeadExport(BaseModel):
     username: Annotated[str, Field(alias="Username")]
     name: Annotated[str | None, Field(alias="Name")]
@@ -30,12 +32,12 @@ class LeadExport(BaseModel):
     no_site_reason: Annotated[LeadsNoSiteReason, Field(alias="NoSiteReason")]
     address: Annotated[str | None, Field(alias="Address")]
     parsed_at: Annotated[datetime, Field(alias="ParsedAt")]
-    
+
     @field_validator("no_site_reason", mode="before")
     @classmethod
     def convert_enum_to_str(cls, value):
         if isinstance(value, LeadsNoSiteReason):
             return value.value
         return value
-    
+
     model_config = ConfigDict(from_attributes=True)

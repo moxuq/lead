@@ -1,7 +1,8 @@
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
-from sqlalchemy.orm import DeclarativeBase
-from dotenv import load_dotenv
 import os
+
+from dotenv import load_dotenv
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.orm import DeclarativeBase
 
 load_dotenv()
 
@@ -15,5 +16,3 @@ class Base(DeclarativeBase):
 async def get_db():
     async with AsyncSessionLocal() as ses:
         yield ses
-        
-                        

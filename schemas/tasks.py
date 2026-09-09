@@ -1,15 +1,23 @@
-from pydantic import Field, ConfigDict, BaseModel, field_validator, ValidationInfo, ValidationError
-from typing import Annotated
 from datetime import datetime
+from typing import Annotated
 
-from ..db.models import TasksTypes, TasksStatuses
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationInfo,
+    field_validator,
+)
+
+from ..db.models import TasksStatuses, TasksTypes
+
 
 class TaskCreate(BaseModel):
     task_type: Annotated[TasksTypes, Field()]
     query: Annotated[str, Field(min_length=1, max_length=100)]
     city: Annotated[str | None, Field(default=None, max_length=50)]
     limit: Annotated[int, Field(default=100, ge=1, le=10000)]
-    
+
     @field_validator("city")
     @classmethod
     def check_city(cls, value: str, info: ValidationInfo) -> str:
@@ -25,9 +33,9 @@ class TaskCreate(BaseModel):
         if task_type == TasksTypes.HASHTAG and not value.startswith("#"):
             return f"#{value}"
         return value
-    
+
     model_config = ConfigDict(extra='forbid')
-    
+
 class TaskResponse(BaseModel):
     id: int
     task_type: TasksTypes
@@ -35,5 +43,5 @@ class TaskResponse(BaseModel):
     city: str | None
     status: TasksStatuses
     created_at: datetime
-    
+
     model_config = ConfigDict(from_attributes=True)
