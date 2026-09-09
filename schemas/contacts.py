@@ -28,9 +28,8 @@ class ContactDTO(BaseModel):
                 try:
                     parsed = phonenumbers.parse(value, region)
                     if phonenumbers.is_valid_number(parsed): return phonenumbers.format_number(parsed, phonenumbers.PhoneNumberFormat.E164)
-                except:
-                    continue
-            raise ValueError("The phone number is not valid")
+                except Exception:
+                    raise ValueError("The phone number is not valid")
         if contact_type == TypeContacts.EMAIL:
             email_adapter = TypeAdapter(EmailStr)
             try:

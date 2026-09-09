@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import select, update
@@ -48,7 +49,7 @@ async def increment_parsed_count(db: AsyncSession, account_id: int) -> None:
     await db.execute(update(AccountPool).where(AccountPool.id == account_id).values(profiles_parsed_count=AccountPool.profiles_parsed_count+1))
     await db.commit()
 
-async def list_accounts(db: AsyncSession) -> list[AccountPool]:
+async def list_accounts(db: AsyncSession) -> Sequence[AccountPool]:
     accounts = (await db.execute(select(AccountPool))).scalars().all()
     return accounts
 
@@ -67,7 +68,7 @@ async def update_task_status(db: AsyncSession, id: int, status: TasksStatuses) -
     await db.execute(update(SearchTask).where(SearchTask.id == id).values(status = status))
     await db.commit()
 
-async def list_tasks(db: AsyncSession) -> list[SearchTask] | None:
+async def list_tasks(db: AsyncSession) -> Sequence[SearchTask] | None:
     tasks = (await db.execute(select(SearchTask))).scalars().all()
     return tasks
 
@@ -78,7 +79,7 @@ async def profile_exists(db: AsyncSession, username: str) -> bool:
 async def create_profile(db: AsyncSession, username: str, url: str, task_id: int) -> RawProfile:
     exists = await profile_exists(db, username)
     if exists == True:
-        profile = (await db.execute(select(RawProfile).where(RawProfile.username == username)))
+        profile = (await db.execute(select(RawProfile).where(RawProfile.username == username))).scalar_one()
         return profile
     new_profile = RawProfile(username=username, url=url, task_id=task_id)
     db.add(new_profile)
