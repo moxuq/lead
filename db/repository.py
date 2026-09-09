@@ -49,3 +49,15 @@ async def create_task(db: AsyncSession, task: TaskCreate) -> SearchTask:
     await db.commit()
     await db.refresh(new_task)
     return new_task
+    
+async def get_task(db: AsyncSession, id: int) -> SearchTask | None:
+    task = (await db.execute(select(SearchTask).where(SearchTask.id == id))).scalar_one_or_none()
+    return task
+
+async def update_task_status(db: AsyncSession, id: int, status: TasksStatuses) -> None:
+    await db.execute(update(SearchTask).where(SearchTask.id == id).values(status = status))
+    await db.commit()
+    
+async def list_tasks(db: AsyncSession) -> list[SearchTasks] | None:
+    tasks = (await db.execute(select(SearchTasks))).scalars().all()
+    return tasks
