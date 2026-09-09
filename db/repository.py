@@ -1,9 +1,10 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
-from ..schemas.accounts import AccountCreate, TaskCreate
-from ..db.models import AccountPool, AccountStatuses, SearchTask, TasksTypes, TasksStatuses
+from ..schemas.accounts import AccountCreate
+from ..schemas.tasks import TaskCreate
+from ..db.models import AccountPool, AccountStatuses, SearchTask, TasksTypes, TasksStatuses, RawProfile, Lead, ParseStatus
 
 async def add_account(db: AsyncSession, user: AccountCreate) -> AccountPool | None:
     db_acc = await get_account_by_username(db, user.username)
@@ -58,6 +59,23 @@ async def update_task_status(db: AsyncSession, id: int, status: TasksStatuses) -
     await db.execute(update(SearchTask).where(SearchTask.id == id).values(status = status))
     await db.commit()
     
-async def list_tasks(db: AsyncSession) -> list[SearchTasks] | None:
-    tasks = (await db.execute(select(SearchTasks))).scalars().all()
+async def list_tasks(db: AsyncSession) -> list[SearchTask] | None:
+    tasks = (await db.execute(select(SearchTask))).scalars().all()
     return tasks
+
+async def profile_exists(db: AsyncSession, usernmae: str) -> bool:
+    profile = (await db.execute(select(RawProfile).where(RawProfile.username == username))).scalar_one_or_none()
+    if profile is not None:
+        return True
+    return False
+    
+async def create_profile(db: AsyncSession, username: str, url: str, task_id: int) -> RawProfile:
+    exists = await profile_exists(db, username)
+    if exists == True:
+        profile = (await db.execute(select(RawProfile).where(RawProfile.username = username)))
+        return profile
+
+
+
+
+
