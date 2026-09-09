@@ -63,7 +63,7 @@ async def list_tasks(db: AsyncSession) -> list[SearchTask] | None:
     tasks = (await db.execute(select(SearchTask))).scalars().all()
     return tasks
 
-async def profile_exists(db: AsyncSession, usernmae: str) -> bool:
+async def profile_exists(db: AsyncSession, username: str) -> bool:
     profile = (await db.execute(select(RawProfile).where(RawProfile.username == username))).scalar_one_or_none()
     if profile is not None:
         return True
@@ -72,10 +72,11 @@ async def profile_exists(db: AsyncSession, usernmae: str) -> bool:
 async def create_profile(db: AsyncSession, username: str, url: str, task_id: int) -> RawProfile:
     exists = await profile_exists(db, username)
     if exists == True:
-        profile = (await db.execute(select(RawProfile).where(RawProfile.username = username)))
+        profile = (await db.execute(select(RawProfile).where(RawProfile.username == username)))
         return profile
-
-
-
-
+    new_profile = RawProfile(username=username, url=url, task_id=task_id)
+    db.add(new_profile)
+    await db.commit()
+    await db.refresh(new_profile)
+    return new_profile
 
