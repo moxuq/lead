@@ -4,9 +4,12 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from schemas.leads import LeadDTO
+
 from ..db.models import (
     AccountPool,
     AccountStatuses,
+    Lead,
     RawProfile,
     SearchTask,
     TasksStatuses,
@@ -86,3 +89,10 @@ async def create_profile(db: AsyncSession, username: str, url: str, task_id: int
     await db.commit()
     await db.refresh(new_profile)
     return new_profile
+
+async def create_lead(db: AsyncSession, data: LeadDTO, profile_id: int) -> Lead:
+    new_lead = Lead(**data.model_dump(), profile_id=profile_id)
+    db.add(new_lead)
+    await db.commit()
+    await db.refresh(new_lead)
+    return new_lead

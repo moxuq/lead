@@ -28,19 +28,19 @@ class ContactDTO(BaseModel):
                 try:
                     parsed = phonenumbers.parse(value, region)
                     if phonenumbers.is_valid_number(parsed): return phonenumbers.format_number(parsed, phonenumbers.PhoneNumberFormat.E164)
-                except Exception:
+                except Exception:  # noqa: BLE001
                     raise ValueError("The phone number is not valid")
         if contact_type == TypeContacts.EMAIL:
             email_adapter = TypeAdapter(EmailStr)
             try:
                 email_adapter.validate_python(value)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 raise ValueError("Incorrect email")
             return value
         if contact_type == TypeContacts.WEBSITE:
             try:
                 AnyUrl(url=value)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 raise ValueError("Incorrect url")
             return value
         return value
