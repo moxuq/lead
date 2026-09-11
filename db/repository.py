@@ -13,6 +13,7 @@ from ..db.models import (
     RawProfile,
     SearchTask,
     TasksStatuses,
+    Contact
 )
 from ..schemas.accounts import AccountCreate
 from ..schemas.tasks import TaskCreate
@@ -82,7 +83,6 @@ async def profile_exists(db: AsyncSession, username: str) -> bool:
 async def create_profile(db: AsyncSession, username: str, url: str, task_id: int) -> RawProfile:
     exists = await profile_exists(db, username)
     if exists == True:
-        profile = (await db.execute(select(RawProfile).where(RawProfile.username == username))).scalar_one()
         return profile
     new_profile = RawProfile(username=username, url=url, task_id=task_id)
     db.add(new_profile)
@@ -103,18 +103,45 @@ async def get_lead_by_username(db: AsyncSession, username: str) -> Lead | None:
     return lead
 
 async def list_leads(db: AsyncSession, filter: FilterQuery) -> list[Lead]:
-	if filter.has_website is not None:
-        website_filtered = (await db.execute(select(Lead).where(Lead.has_website == filter.has_website))).scalars().all()
-		return filtered
+    stmt = select(Lead)
+    if filter.has_website is not None:
+        stmt = stmt.where(Lead.has_website == filter.has_website)
+    if filter.is_business_account is not None:
+        stmt = stmt.where(Lead.is_business_account == filter.is_business_account)
+    if filter.no_site_reason is not None:
+        stmt = stmt.where(Lead.no_site_reason == filter.no_site_reason)
+    if filter.min_followers is not None:
+        stmt = stmt.where(Lead.followers_count >= filter.min_followers)
+    if filter.max_followers is not None:
+        stmt = stmt.where(Lead.followers_count <= filter.max_followers)
+    result = (await db.execute(stmt)).scalars().all()
+    return result
 
 async def get_stats(db: AsyncSession) -> StatsResponse:
-    total_account = (select(func.count(AccountPool.id)).scalar_subqery())
-    active_accounts = (select(func.count(AccountPool.id).where(AccountPool.status == AccountStatuses.AVAILABLE)).scalar_subqery())
-    banned_accounts = (select(func.count(AccountPool.id).where(AccountPool.status == AccountStatuses.BAN)).scalar_subqery())
-    total_tasks = (select(func.count(SearchTask)).scalar_subqery())
-    total_leads = (select(func.count(Lead.id)).scalar_subqery())
-    leads_with_website = (select(func.count(Lead.id)).where(Lead.has_website == True)).scalar_subqery())
-    leads_no_website = (select(func.count(Lead.id)).where(Lead.has_website == False)).scalar_subqery())
-    result = (await db.execute(total_account, active_accounts, banned_accounts, total_tasks, total_leads, leads_with_website, leads_no_website, total_contacts)).scalars().all()
-    stats = StatsResponse(**result)
-    return stats
+    total_accounts = await db.scalar(select(func.count(AccountPool.id)))
+    active_accounts = await db.scalar(
+        select(func.count(AccountPool.id)).where(AccountPool.status == AccountStatuses.AVAILABLE)
+    )
+    banned_accounts = await db.scalar(
+        select(func.count(AccountPool.id)).where(AccountPool.status == AccountStatuses.BAN)
+    )
+    total_tasks = await db.scalar(select(func.count(SearchTask.id)))
+    total_leads = await db.scalar(select(func.count(Lead.id)))
+    leads_with_website = await db.scalar(
+        select(func.count(Lead.id)).where(Lead.has_website == True)
+    )
+    leads_no_website = await db.scalar(
+        select(func.count(Lead.id)).where(Lead.has_website == False)
+    )
+    total_contacts = await db.scalar(select(func.count(Contact.id)))
+    return StatsResponse(
+        total_accounts=total_accounts or 0,
+        active_accounts=active_accounts or 0,
+        banned_accounts=banned_accounts or 0,
+        total_tasks=total_tasks or 0,
+        total_leads=total_leads or 0,
+        leads_with_website=leads_with_website or 0,
+        leads_no_website=leads_no_website or 0,
+        total_contacts=total_contacts or 0,
+    )
+
