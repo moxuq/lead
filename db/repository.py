@@ -110,8 +110,11 @@ async def list_leads(db: AsyncSession, filter: FilterQuery) -> list[Lead]:
 async def get_stats(db: AsyncSession) -> StatsResponse:
     total_account = (select(func.count(AccountPool.id)).scalar_subqery())
     active_accounts = (select(func.count(AccountPool.id).where(AccountPool.status == AccountStatuses.AVAILABLE)).scalar_subqery())
-	banned_accounts = (select(func.count(AccountPool.id).where(AccountPool.status == AccountStatuses.BAN)).scalar_subqery())
+    banned_accounts = (select(func.count(AccountPool.id).where(AccountPool.status == AccountStatuses.BAN)).scalar_subqery())
     total_tasks = (select(func.count(SearchTask)).scalar_subqery())
     total_leads = (select(func.count(Lead.id)).scalar_subqery())
     leads_with_website = (select(func.count(Lead.id)).where(Lead.has_website == True)).scalar_subqery())
     leads_no_website = (select(func.count(Lead.id)).where(Lead.has_website == False)).scalar_subqery())
+    result = (await db.execute(total_account, active_accounts, banned_accounts, total_tasks, total_leads, leads_with_website, leads_no_website, total_contacts)).scalars().all()
+    stats = StatsResponse(**result)
+    return stats
