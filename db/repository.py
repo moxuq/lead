@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import select, update
+from sqlalchemy import select, update, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from schemas.leads import LeadDTO
@@ -16,7 +16,7 @@ from ..db.models import (
 )
 from ..schemas.accounts import AccountCreate
 from ..schemas.tasks import TaskCreate
-
+from ..schemas.common import FilterQuery, StatsResponse
 
 async def add_account(db: AsyncSession, user: AccountCreate) -> AccountPool | None:
     db_acc = await get_account_by_username(db, user.username)
@@ -96,3 +96,22 @@ async def create_lead(db: AsyncSession, data: LeadDTO, profile_id: int) -> Lead:
     await db.commit()
     await db.refresh(new_lead)
     return new_lead
+
+async def get_lead_by_username(db: AsyncSession, username: str) -> Lead | None:
+    lead = (await db.execute(select(Lead).join(RawProfile)
+    .where(RawProfile.username == username))).scalar_one_or_none()
+    return lead
+
+async def list_leads(db: AsyncSession, filter: FilterQuery) -> list[Lead]:
+	if filter.has_website is not None:
+        website_filtered = (await db.execute(select(Lead).where(Lead.has_website == filter.has_website))).scalars().all()
+		return filtered
+
+async def get_stats(db: AsyncSession) -> StatsResponse:
+    total_account = (select(func.count(AccountPool.id)).scalar_subqery())
+    active_accounts = (select(func.count(AccountPool.id).where(AccountPool.status == AccountStatuses.AVAILABLE)).scalar_subqery())
+	banned_accounts = (select(func.count(AccountPool.id).where(AccountPool.status == AccountStatuses.BAN)).scalar_subqery())
+    total_tasks = (select(func.count(SearchTask)).scalar_subqery())
+    total_leads = (select(func.count(Lead.id)).scalar_subqery())
+    leads_with_website = (select(func.count(Lead.id)).where(Lead.has_website == True)).scalar_subqery())
+    leads_no_website = (select(func.count(Lead.id)).where(Lead.has_website == False)).scalar_subqery())
