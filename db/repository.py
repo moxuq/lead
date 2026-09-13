@@ -8,6 +8,8 @@ from ..db.models import (
     AccountPool,
     AccountStatuses,
     Contact,
+    ErrorLog,
+    ErrorType,
     Lead,
     RawProfile,
     SearchTask,
@@ -15,6 +17,7 @@ from ..db.models import (
 )
 from ..schemas.accounts import AccountCreate
 from ..schemas.common import FilterQuery, StatsResponse
+from ..schemas.contacts import ContactDTO
 from ..schemas.leads import LeadDTO
 from ..schemas.tasks import TaskCreate
 
@@ -111,7 +114,7 @@ async def create_lead(db: AsyncSession, data: LeadDTO, profile_id: int) -> Lead:
 async def get_lead_by_username(db: AsyncSession, username: str) -> Lead | None:
     lead = (await db.execute(
         select(Lead)
-        .join(RawProfile, Lead.profile_id == RawProfile.id)  # ✅ явное ON
+        .join(RawProfile, Lead.profile_id == RawProfile.id)
         .where(RawProfile.username == username)
     )).scalar_one_or_none()
     return lead
@@ -158,3 +161,27 @@ async def get_stats(db: AsyncSession) -> StatsResponse:
         leads_no_website=leads_no_website or 0,
         total_contacts=total_contacts or 0,
     )
+
+async def create_contact(db: AsyncSession, data: ContactDTO) -> Contact:
+    exists = (await db.execute(select(Contact)
+        .where(Contact.lead_id == data.lead_id,
+         Contact.type == data.type,
+         Contact.value == data.value))).scalar_one_or_none()
+    if exists:
+        return exists
+    new_contact = Contact(**data.model_dump())
+    db.add(new_contact)
+    await db.commit()
+    await db.refresh(new_contact)
+    return new_contact
+
+async def list_contacts_by_lead(db: AsyncSession, lead_id: int) -> Sequence[Contact]:
+    contacts = (await db.execute(select(Contact).where(Contact.lead_id == lead_id))).scalars().all()
+    return contacts
+
+async def log_error(db: AsyncSession, error_type: ErrorType, message: str, account_id: int | None, profile_id: int | None, stack_trace: str | None) -> ErrorLog:
+    new_error = ErrorLog(account_id=account_id, profile_id=profile_id, error_type=error_type, message=message, stack_trace=stack_trace)
+    db.add(new_error)
+    await db.commit()
+    await db.refresh(new_error)
+    return new_error
