@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import select, update, func
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from schemas.leads import LeadDTO
@@ -9,15 +9,16 @@ from schemas.leads import LeadDTO
 from ..db.models import (
     AccountPool,
     AccountStatuses,
+    Contact,
     Lead,
     RawProfile,
     SearchTask,
     TasksStatuses,
-    Contact
 )
 from ..schemas.accounts import AccountCreate
-from ..schemas.tasks import TaskCreate
 from ..schemas.common import FilterQuery, StatsResponse
+from ..schemas.tasks import TaskCreate
+
 
 async def add_account(db: AsyncSession, user: AccountCreate) -> AccountPool | None:
     db_acc = await get_account_by_username(db, user.username)
@@ -81,9 +82,9 @@ async def profile_exists(db: AsyncSession, username: str) -> bool:
     return profile is not None
 
 async def create_profile(db: AsyncSession, username: str, url: str, task_id: int) -> RawProfile:
-    exists = await profile_exists(db, username)
-    if exists == True:
-        return profile
+    existing = (await db.execute(select(RawProfile).where(RawProfile.username == username))).scalar_one_or_none()
+    if existing:
+        return existing
     new_profile = RawProfile(username=username, url=url, task_id=task_id)
     db.add(new_profile)
     await db.commit()
@@ -115,7 +116,7 @@ async def list_leads(db: AsyncSession, filter: FilterQuery) -> list[Lead]:
     if filter.max_followers is not None:
         stmt = stmt.where(Lead.followers_count <= filter.max_followers)
     result = (await db.execute(stmt)).scalars().all()
-    return result
+    return result  # pyright: ignore[reportReturnType]
 
 async def get_stats(db: AsyncSession) -> StatsResponse:
     total_accounts = await db.scalar(select(func.count(AccountPool.id)))
@@ -144,4 +145,3 @@ async def get_stats(db: AsyncSession) -> StatsResponse:
         leads_no_website=leads_no_website or 0,
         total_contacts=total_contacts or 0,
     )
-
