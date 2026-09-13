@@ -4,8 +4,6 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from schemas.leads import LeadDTO
-
 from ..db.models import (
     AccountPool,
     AccountStatuses,
@@ -17,6 +15,7 @@ from ..db.models import (
 )
 from ..schemas.accounts import AccountCreate
 from ..schemas.common import FilterQuery, StatsResponse
+from ..schemas.leads import LeadDTO
 from ..schemas.tasks import TaskCreate
 
 
@@ -92,6 +91,17 @@ async def create_profile(db: AsyncSession, username: str, url: str, task_id: int
     return new_profile
 
 async def create_lead(db: AsyncSession, data: LeadDTO, profile_id: int) -> Lead:
+    existing = (await db.execute(
+        select(Lead).where(Lead.profile_id == profile_id)
+    )).scalar_one_or_none()
+
+    if existing:
+        for key, value in data.model_dump().items():
+            setattr(existing, key, value)
+        await db.commit()
+        await db.refresh(existing)
+        return existing
+
     new_lead = Lead(**data.model_dump(), profile_id=profile_id)
     db.add(new_lead)
     await db.commit()
@@ -99,8 +109,11 @@ async def create_lead(db: AsyncSession, data: LeadDTO, profile_id: int) -> Lead:
     return new_lead
 
 async def get_lead_by_username(db: AsyncSession, username: str) -> Lead | None:
-    lead = (await db.execute(select(Lead).join(RawProfile)
-    .where(RawProfile.username == username))).scalar_one_or_none()
+    lead = (await db.execute(
+        select(Lead)
+        .join(RawProfile, Lead.profile_id == RawProfile.id)  # ✅ явное ON
+        .where(RawProfile.username == username)
+    )).scalar_one_or_none()
     return lead
 
 async def list_leads(db: AsyncSession, filter: FilterQuery) -> list[Lead]:
