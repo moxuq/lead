@@ -179,7 +179,7 @@ async def list_contacts_by_lead(db: AsyncSession, lead_id: int) -> Sequence[Cont
     contacts = (await db.execute(select(Contact).where(Contact.lead_id == lead_id))).scalars().all()
     return contacts
 
-async def log_error(db: AsyncSession, error_type: ErrorType, message: str, account_id: int | None, profile_id: int | None, stack_trace: str | None) -> ErrorLog:
+async def log_error(db: AsyncSession, error_type: ErrorType, message: str, account_id: int | None = None, profile_id: int | None = None, stack_trace: str | None = None) -> ErrorLog:
     new_error = ErrorLog(account_id=account_id, profile_id=profile_id, error_type=error_type, message=message, stack_trace=stack_trace)
     db.add(new_error)
     await db.commit()
