@@ -185,3 +185,7 @@ async def log_error(db: AsyncSession, error_type: ErrorType, message: str, accou
     await db.commit()
     await db.refresh(new_error)
     return new_error
+
+async def list_errors(db: AsyncSession, offset: int) -> Sequence[ErrorLog]:
+    list_of_errors = (await db.execute(select(ErrorLog).offset(offset))).scalars().all()
+    return list_errors
