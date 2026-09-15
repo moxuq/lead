@@ -3,7 +3,8 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from ..db.models import LeadsNoSiteReason
-
+from leads import LeadDTO
+from contacts import ContactDTO
 
 class ExportRequest(BaseModel):
     format: Annotated[Literal['xlsx','csv'], Field(default='xlsx')]
@@ -40,3 +41,8 @@ class StatsResponse(BaseModel):
     total_contacts: int
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class LeadsAndContactsDTO(BaseModel):
+    lead: LeadDTO
+    contacts: list[ContactDTO]
