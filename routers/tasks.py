@@ -7,7 +7,7 @@ from ..db.models import TasksStatuses
 
 tasks_router = APIRouter(prefix='/tasks', tags=['Tasks'])
 
-@tasks_router.post('/', response_model=TasksResponse, status_code=201)
+@tasks_router.post('/', response_model=TaskResponse, status_code=201)
 async def post_create_new_task(new_task: TaskCreate, db: AsyncSession = Depends(get_db)):
     result = await create_task(db, new_task)
     return result
