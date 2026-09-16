@@ -1,8 +1,9 @@
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from ..db.database import get_db
-from fastapi import Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession, APIRouter
-from ..schemas.accounts import AccountResponse, AccountCreate
 from ..db.repository import add_account, list_accounts
+from ..schemas.accounts import AccountCreate, AccountResponse
 
 accounts_router = APIRouter(prefix='/accounts', tags=['Account'])
 

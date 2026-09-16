@@ -1,10 +1,12 @@
 from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
+from sqlalchemy.sql.ddl import Sequence
 
 from ..db.models import LeadsNoSiteReason
-from .leads import LeadDTO
 from .contacts import ContactDTO
+from .leads import LeadDTO
+
 
 class ExportRequest(BaseModel):
     format: Annotated[Literal['xlsx','csv'], Field(default='xlsx')]
@@ -45,4 +47,4 @@ class StatsResponse(BaseModel):
 
 class LeadsAndContactsDTO(BaseModel):
     lead: LeadDTO
-    contacts: list[ContactDTO]
+    contacts: Sequence[ContactDTO]

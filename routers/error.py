@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..db.repository import list_errors
-from ..db.models import ErrorLog
 from ..db.database import get_db
+from ..db.models import ErrorLog
+from ..db.repository import list_errors
 
 errors_router = APIRouter(prefix='/errors', tags=['Errors'])
 

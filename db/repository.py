@@ -190,10 +190,10 @@ async def list_errors(db: AsyncSession, limit: int) -> Sequence[ErrorLog]:
     list_of_errors = (await db.execute(select(ErrorLog).limit(limit))).scalars().all()
     return list_of_errors
 
-async def list_tasks_by_status(db: AsyncSession, status: TasksStatuses | None) -> list[SearchTask]:
+async def list_tasks_by_status(db: AsyncSession, status: TasksStatuses | None) -> Sequence[SearchTask]:
     if status:
         stmt = select(SearchTask).where(SearchTask.status == status)
     else:
         stmt = select(SearchTask)
-    list_of_tasks = await db.execute(stmt).scalars().all()
+    list_of_tasks = (await db.execute(stmt)).scalars().all()
     return list_of_tasks
