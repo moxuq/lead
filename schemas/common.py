@@ -3,8 +3,8 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from ..db.models import LeadsNoSiteReason
-from leads import LeadDTO
-from contacts import ContactDTO
+from .leads import LeadDTO
+from .contacts import ContactDTO
 
 class ExportRequest(BaseModel):
     format: Annotated[Literal['xlsx','csv'], Field(default='xlsx')]
